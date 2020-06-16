@@ -4,7 +4,7 @@
 
 # Imports ###########################################################
 
-from __future__ import absolute_import
+
 
 import copy
 import json
@@ -905,13 +905,13 @@ class DragAndDropBlock(
         for this.
         """
         if hasattr(self.runtime, 'replace_urls'):
-            url = self.runtime.replace_urls(u'"{}"'.format(url))[1:-1]
+            url = self.runtime.replace_urls('"{}"'.format(url))[1:-1]
         elif hasattr(self.runtime, 'course_id'):
             # edX Studio uses a different runtime for 'studio_view' than 'student_view',
             # and the 'studio_view' runtime doesn't provide the replace_urls API.
             try:
                 from static_replace import replace_static_urls  # pylint: disable=import-error
-                url = replace_static_urls(u'"{}"'.format(url), None, course_id=self.runtime.course_id)[1:-1]
+                url = replace_static_urls('"{}"'.format(url), None, course_id=self.runtime.course_id)[1:-1]
             except ImportError:
                 pass
         return url
@@ -922,7 +922,7 @@ class DragAndDropBlock(
         # In assessment mode, we do not want to leak the correctness info for individual items to the frontend,
         # so we remove "correct" from all items when in assessment mode.
         if self.mode == Constants.ASSESSMENT_MODE:
-            for item in item_state.values():
+            for item in list(item_state.values()):
                 del item["correct"]
 
         overall_feedback_msgs, __ = self._get_feedback()

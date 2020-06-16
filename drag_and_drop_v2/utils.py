@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """ Drag and Drop v2 XBlock - Utils """
-from __future__ import absolute_import
+
 
 import copy
 from collections import namedtuple

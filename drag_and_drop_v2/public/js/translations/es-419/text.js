@@ -20,9 +20,12 @@
 
   django.catalog = django.catalog || {};
   var newcatalog = {
-    "Feedback": "Realimentaci\u00f3n",
+    "Feedback": "Retroalimentaci\u00f3n",
     "Loading drag and drop problem.": "Cargando problema de arrastrar y soltar.",
-    "Reset": "Restablecer"
+    "Reset": "Restablecer",
+    "Submit": "Enviar",
+    "You have used {used} of {total} attempts.": "Has realizado {used} de {total} intentos.",
+    "Show Answer": "Mostrar Respuesta"
   };
   for (var key in newcatalog) {
     django.catalog[key] = newcatalog[key];

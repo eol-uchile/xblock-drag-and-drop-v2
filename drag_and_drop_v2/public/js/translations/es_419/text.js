@@ -132,7 +132,7 @@
     "Use this zone to associate an item with the middle layer of the triangle.": "Use esta zona para asociar un \u00edtem con la parte media del triangulo.", 
     "Use this zone to associate an item with the top layer of the triangle.": "Use esta zona para asociar un \u00edtem con la parte superior del triangulo.", 
     "You can complete this problem using only your keyboard by following the guidance below:": "Puede completar este problema usando \u00fanicamente su teclado y siguiendo las recomendaciones a continuaci\u00f3n:", 
-    "You have used {used} of {total} attempts.": "Usted ha usado {used} de {total} intentos.", 
+    "You have used {used} of {total} attempts.": "Has realizado {used} de {total} intentos.", 
     "You silly, there are no zones for this one.": "No. No hay ninguna zona para este \u00edtem.", 
     "Your highest score is {score}": "Su mayor puntaje ha sido {score}", 
     "Zone borders": "Margenes de la zona", 
