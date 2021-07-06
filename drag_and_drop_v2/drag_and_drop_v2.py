@@ -16,6 +16,7 @@ import six.moves.urllib.error  # pylint: disable=import-error
 import six.moves.urllib.parse  # pylint: disable=import-error
 import six.moves.urllib.request  # pylint: disable=import-error
 import webob
+
 from django.utils import translation
 from xblock.core import XBlock
 from xblock.exceptions import JsonHandlerError
@@ -28,13 +29,14 @@ from xblockutils.settings import ThemableXBlockMixin, XBlockWithSettingsMixin
 from .default_data import DEFAULT_DATA
 from .utils import (
     Constants, DummyTranslationService, FeedbackMessage,
-    FeedbackMessages, ItemStats, StateMigration, _
+    FeedbackMessages, ItemStats, StateMigration, _clean_data, _
 )
 
 # Globals ###########################################################
 
 loader = ResourceLoader(__name__)
 logger = logging.getLogger(__name__)
+
 
 # Classes ###########################################################
 
@@ -208,7 +210,21 @@ class DragAndDropBlock(
         enforce_type=True,
     )
 
+    raw_possible = Float(
+        help=_("Maximum score available of the problem as a raw value between 0 and 1."),
+        scope=Scope.user_state,
+        default=1,
+        enforce_type=True,
+    )
+
     block_settings_key = 'drag-and-drop-v2'
+
+    @property
+    def score(self):
+        """
+        Returns learners saved score.
+        """
+        return Score(self.raw_earned, self.raw_possible)
 
     def max_score(self):  # pylint: disable=no-self-use
         """
@@ -219,11 +235,11 @@ class DragAndDropBlock(
 
     def get_score(self):
         """
-        Return the problem's current score as raw values.
+        Returns user's current (saved) score for the problem as raw values.
         """
         if self._get_raw_earned_if_set() is None:
             self.raw_earned = self._learner_raw_score()
-        return Score(self.raw_earned, self.max_score())
+        return Score(self.raw_earned, self.raw_possible)
 
     def set_score(self, score):
         """
@@ -232,8 +248,8 @@ class DragAndDropBlock(
         score and possible max (for this block, we expect that this will
         always be 1).
         """
-        assert score.raw_possible == self.max_score()
         self.raw_earned = score.raw_earned
+        self.raw_possible = score.raw_possible
 
     def calculate_score(self):
         """
@@ -253,7 +269,14 @@ class DragAndDropBlock(
         Returns the block's current saved grade multiplied by the block's
         weight- the number of points earned by the learner.
         """
-        return self.raw_earned * self.weight
+        if self.raw_possible <= 0:
+            return None
+
+        if self.weight is None:
+            return self.raw_earned
+
+        weighted_earned = self.raw_earned * self.weight / self.raw_possible
+        return weighted_earned
 
     def _learner_raw_score(self):
         """
@@ -276,7 +299,7 @@ class DragAndDropBlock(
             return None
         text_js = 'public/js/translations/{lang_code}/text.js'
         country_code = lang_code.split('-')[0]
-        for code in (lang_code, country_code):
+        for code in (translation.to_locale(lang_code), lang_code, country_code):
             if pkg_resources.resource_exists(loader.module_name, text_js.format(lang_code=code)):
                 return text_js.format(lang_code=code)
         return None
@@ -646,7 +669,7 @@ class DragAndDropBlock(
         functionality.
         """
         if hasattr(self, "has_deadline_passed"):
-            return self.has_deadline_passed()               # pylint: disable=no-member
+            return self.has_deadline_passed()  # pylint: disable=no-member
         else:
             return False
 
@@ -831,6 +854,7 @@ class DragAndDropBlock(
 
         # There's no going back from "completed" status to "incomplete"
         self.completed = self.completed or self._is_answer_correct() or not self.attempts_remain
+
         current_raw_earned = self._learner_raw_score()
         # ... and from higher grade to lower
         # if we have an old-style (i.e. unreliable) grade, override no matter what
@@ -844,8 +868,8 @@ class DragAndDropBlock(
             current_raw_earned_is_greater = True
 
         if current_raw_earned is None or current_raw_earned_is_greater:
-            self.raw_earned = current_raw_earned
-            self._publish_grade(Score(self.raw_earned, self.max_score()))
+            self.set_score(Score(current_raw_earned, self.max_score()))
+            self.publish_grade(self.score)
 
         # and no matter what - emit progress event for current user
         self.runtime.publish(self, "progress", {})
@@ -888,6 +912,15 @@ class DragAndDropBlock(
             'is_correct': is_correct,
         })
 
+    def publish_grade(self, score=None, only_if_higher=None):
+        """
+        Publishes the student's current grade to the system as an event
+        """
+        if not score:
+            score = self.score
+        self._publish_grade(score, only_if_higher)
+        return {'grade': self.score.raw_earned, 'max_grade': self.score.raw_possible}
+
     def _is_attempt_correct(self, attempt):
         """
         Check if the item was placed correctly.
@@ -910,8 +943,8 @@ class DragAndDropBlock(
             # edX Studio uses a different runtime for 'studio_view' than 'student_view',
             # and the 'studio_view' runtime doesn't provide the replace_urls API.
             try:
-                from static_replace import replace_static_urls  # pylint: disable=import-error
-                url = replace_static_urls('"{}"'.format(url), None, course_id=self.runtime.course_id)[1:-1]
+                from common.djangoapps.static_replace import replace_static_urls  # pylint: disable=import-error
+                url = replace_static_urls(u'"{}"'.format(url), None, course_id=self.runtime.course_id)[1:-1]
             except ImportError:
                 pass
         return url
@@ -1119,3 +1152,56 @@ class DragAndDropBlock(
                 "<vertical_demo><drag-and-drop-v2 mode='assessment' max_attempts='3'/></vertical_demo>"
             ),
         ]
+
+    def index_dictionary(self):
+        """
+        Return dictionary prepared with module content and type for indexing.
+        """
+        # return key/value fields in a Python dict object
+        # values may be numeric / string or dict
+        # default implementation is an empty dict
+
+        xblock_body = super(DragAndDropBlock, self).index_dictionary()
+
+        zones_display_names = {
+            "zone_{}_display_name".format(zone_i):
+                _clean_data(zone.get("title", ""))
+            for zone_i, zone in enumerate(self.data.get("zones", []))
+        }
+
+        zones_description = {
+            "zone_{}_description".format(zone_i):
+                _clean_data(zone.get("description", ""))
+            for zone_i, zone in enumerate(self.data.get("zones", []))
+        }
+
+        items_display_names = {
+            "item_{}_display_name".format(item_i):
+                _clean_data(item.get("displayName", ""))
+            for item_i, item in enumerate(self.data.get("items", []))
+        }
+
+        items_image_description = {
+            "item_{}_image_description".format(item_i):
+                _clean_data(item.get("imageDescription", ""))
+            for item_i, item in enumerate(self.data.get("items", []))
+        }
+
+        index_body = {
+            "display_name": self.display_name,
+            "question_text": _clean_data(self.question_text),
+            "background_image_description": self.data.get("targetImgDescription", ""),
+        }
+        index_body.update(items_display_names)
+        index_body.update(items_image_description)
+        index_body.update(zones_display_names)
+        index_body.update(zones_description)
+
+        if "content" in xblock_body:
+            xblock_body["content"].update(index_body)
+        else:
+            xblock_body["content"] = index_body
+
+        xblock_body["content_type"] = "Drag and Drop"
+
+        return xblock_body

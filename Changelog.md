@@ -1,6 +1,24 @@
 Drag and Drop XBlock changelog
 ==============================
 
+Version 2.3.2 (2021-02-12)
+---------------------------
+
+* Fix instance of `DeprecatedEdxPlatformImportWarning`.
+
+Version 2.3.1 (2020-08-04)
+---------------------------
+
+* Better JS i18n language mapping.
+* i18n source file updated in Transifex.
+* i18n updated (not complete) support for languages: ar, de, es_419, fr, he, hi, it, ja, ko, nl, pl, pt_BR, ru, tr and zh_CN
+
+Version 2.3 (2020-08-04)
+---------------------------
+
+* Make Drag and Drop Indexable.
+* Drop Python 2 support.
+
 Version 2.2.10 (2020-04-14)
 ---------------------------
 
