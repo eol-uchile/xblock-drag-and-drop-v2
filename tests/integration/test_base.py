@@ -2,7 +2,7 @@
 #
 # Imports ###########################################################
 
-from __future__ import absolute_import
+
 
 import json
 from collections import namedtuple
@@ -206,13 +206,13 @@ class BaseIntegrationTest(SeleniumBaseTest):
     def wait_until_html_in(self, html, elem):
         wait = WebDriverWait(elem, 2)
         wait.until(lambda e: html in e.get_attribute('innerHTML'),
-                   u"{} should be in {}".format(html, elem.get_attribute('innerHTML')))
+                   "{} should be in {}".format(html, elem.get_attribute('innerHTML')))
 
     @staticmethod
     def wait_until_has_class(class_name, elem):
         wait = WebDriverWait(elem, 2)
         wait.until(lambda e: class_name in e.get_attribute('class').split(),
-                   u"Class name {} not in {}".format(class_name, elem.get_attribute('class')))
+                   "Class name {} not in {}".format(class_name, elem.get_attribute('class')))
 
     def wait_for_ajax(self, timeout=15):
         """
@@ -284,22 +284,22 @@ class InteractionTestBase(object):
     @staticmethod
     def _get_items_with_zone(items_map):
         return {
-            item_key: definition for item_key, definition in items_map.items()
+            item_key: definition for item_key, definition in list(items_map.items())
             if definition.zone_ids != []
         }
 
     @staticmethod
     def _get_items_without_zone(items_map):
         return {
-            item_key: definition for item_key, definition in items_map.items()
+            item_key: definition for item_key, definition in list(items_map.items())
             if definition.zone_ids == []
         }
 
     @staticmethod
     def _get_items_by_zone(items_map):
-        zone_ids = set([definition.zone_ids[0] for _, definition in items_map.items() if definition.zone_ids])
+        zone_ids = set([definition.zone_ids[0] for _, definition in list(items_map.items()) if definition.zone_ids])
         return {
-            zone_id: {item_key: definition for item_key, definition in items_map.items()
+            zone_id: {item_key: definition for item_key, definition in list(items_map.items())
                       if definition.zone_ids and definition.zone_ids[0] is zone_id}
             for zone_id in zone_ids
         }
@@ -375,7 +375,7 @@ class InteractionTestBase(object):
         # When the spinner disappears, we can assume that the XHR request has finished.
         wait.until(
             lambda e: 'fa-spinner' not in e.get_attribute('innerHTML'),
-            u"Spinner should not be in {}".format(elem.get_attribute('innerHTML'))
+            "Spinner should not be in {}".format(elem.get_attribute('innerHTML'))
         )
 
     def place_item(self, item_value, zone_id, action_key=None, wait=True):
@@ -492,7 +492,7 @@ class InteractionTestBase(object):
         decoy_items = self._get_items_without_zone(items_map)
         # Place decoy items into first available zone.
         zone_id, zone_title = self.all_zones[0]
-        for definition in decoy_items.values():
+        for definition in list(decoy_items.values()):
             self.place_item(definition.item_id, zone_id, action_key)
             self.assert_placed_item(definition.item_id, zone_title, assessment_mode=True)
 

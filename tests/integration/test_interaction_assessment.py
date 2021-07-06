@@ -2,7 +2,7 @@
 
 # Imports ###########################################################
 
-from __future__ import absolute_import
+
 
 import re
 import time
@@ -196,12 +196,12 @@ class AssessmentInteractionTest(
 
     def _assert_show_answer_item_placement(self):
         zones = dict(self.all_zones)
-        for item in self._get_items_with_zone(self.items_map).values():
+        for item in list(self._get_items_with_zone(self.items_map).values()):
             zone_titles = [zones[zone_id] for zone_id in item.zone_ids]
             # When showing answers, correct items are placed as if assessment_mode=False
             self.assert_placed_item(item.item_id, zone_titles, assessment_mode=False)
 
-        for item_definition in self._get_items_without_zone(self.items_map).values():
+        for item_definition in list(self._get_items_without_zone(self.items_map).values()):
             self.assertNotDraggable(item_definition.item_id)
             item = self._get_item_by_value(item_definition.item_id)
             self.assertEqual(item.get_attribute('aria-grabbed'), 'false')

@@ -1,6 +1,6 @@
 # Imports ###########################################################
 
-from __future__ import absolute_import
+
 
 from ddt import data, ddt, unpack
 from selenium.common.exceptions import NoSuchElementException
@@ -339,7 +339,7 @@ class TestDragAndDropRenderZoneAlign(BaseIntegrationTest):
             "#-Zone_Right_Align": "right",
             "#-Zone_Center_Align": "center"
         }
-        for zone_id, expected_alignment in expected_alignments.items():
+        for zone_id, expected_alignment in list(expected_alignments.items()):
             selector = "{zone_id} .item-wrapper".format(zone_id=zone_id)
             self.assertEqual(self._get_style(selector, "textAlign"), expected_alignment)
             self.assertEqual(self._get_style(selector, "textAlign", computed=True), expected_alignment)

@@ -3,7 +3,7 @@
 
 # Imports ###########################################################
 
-from __future__ import absolute_import
+
 
 import re
 
@@ -120,7 +120,7 @@ class ParameterizedTestsMixin(object):
         # Scroll drop zones into view to make sure Selenium can successfully drop items
         self.scroll_down(pixels=scroll_down)
 
-        for definition in items_map.values():
+        for definition in list(items_map.values()):
             zone_id, _ = self._get_incorrect_zone_for_item(definition, all_zones)
             if zone_id is not None:  # Some items may be placed in any zone, ignore those.
                 self.place_item(definition.item_id, zone_id, action_key)
@@ -144,7 +144,7 @@ class ParameterizedTestsMixin(object):
         # Scroll drop zones into view to make sure Selenium can successfully drop items
         self.scroll_down(pixels=scroll_down)
 
-        for definition in items_map.values():
+        for definition in list(items_map.values()):
             zone_id, zone_title = self._get_incorrect_zone_for_item(definition, all_zones)
             if zone_id is not None:  # Some items may be placed in any zone, ignore those.
                 self.place_item(definition.item_id, zone_id, action_key)
@@ -162,7 +162,7 @@ class ParameterizedTestsMixin(object):
         self.scroll_down(pixels=scroll_down)
 
         # Take each item, place it into first zone, then continue moving it until it has visited all zones.
-        for item_key in items_map.keys():
+        for item_key in list(items_map.keys()):
             for zone_id, zone_title in all_zones:
                 self.place_item(item_key, zone_id, action_key)
                 self.assert_placed_item(item_key, zone_title, assessment_mode=True)
@@ -178,7 +178,7 @@ class ParameterizedTestsMixin(object):
 
         # Take each item an assigned zone, place it into the correct zone, then ensure it cannot be moved to other.
         # zones or back to the bank.
-        for item_key, definition in items_map.items():
+        for item_key, definition in list(items_map.items()):
             if definition.zone_ids:  # skip decoy items
                 self.place_item(definition.item_id, definition.zone_ids[0], action_key)
                 self.assert_placed_item(definition.item_id, definition.zone_title, assessment_mode=False)
@@ -210,14 +210,14 @@ class ParameterizedTestsMixin(object):
         items = self._get_items_with_zone(items_map)
 
         def get_locations():
-            return {item_id: self._get_item_by_value(item_id).location for item_id in items.keys()}
+            return {item_id: self._get_item_by_value(item_id).location for item_id in list(items.keys())}
 
         initial_locations = get_locations()
 
         # Scroll drop zones into view to make sure Selenium can successfully drop items
         self.scroll_down(pixels=scroll_down)
 
-        for item_key, definition in items.items():
+        for item_key, definition in list(items.items()):
             self.place_item(definition.item_id, definition.zone_ids[0], action_key)
             self.assert_placed_item(definition.item_id, definition.zone_title, assessment_mode=assessment_mode)
 
@@ -243,7 +243,7 @@ class ParameterizedTestsMixin(object):
         self.wait_until_html_in(feedback['intro'], self._get_feedback_message())
 
         locations_after_reset = get_locations()
-        for item_key in items.keys():
+        for item_key in list(items.keys()):
             self.assertDictEqual(locations_after_reset[item_key], initial_locations[item_key])
             self.assert_reverted_item(item_key)
 
@@ -315,7 +315,7 @@ class StandardInteractionTest(DefaultDataTestMixin, InteractionTestBase, Paramet
             self.assertEqual(items_container.get_attribute('aria-describedby').text, alt_text)
 
     def test_alt_text_keyboard_help_over_item(self):
-        for _, definition in self.items_map.items():
+        for _, definition in list(self.items_map.items()):
             item = self._get_unplaced_item_by_value(definition.item_id)
             ActionChains(self.browser).move_to_element(item).perform()
             self.assertEqual(item.find_element_by_css_selector('.sr.draggable').text, ", draggable")
@@ -331,18 +331,18 @@ class StandardInteractionTest(DefaultDataTestMixin, InteractionTestBase, Paramet
         self.scroll_down(pixels=100)
 
         # Place all items in zones where they belong
-        for definition in self._get_items_with_zone(self.items_map).values():
+        for definition in list(self._get_items_with_zone(self.items_map).values()):
             self.place_item(definition.item_id, definition.zone_ids[0])
 
         # Check if alt text appears for that item when the user tabs over the zone
-        for zone_id, items_dict in self._get_items_by_zone(self.items_map).items():
+        for zone_id, items_dict in list(self._get_items_by_zone(self.items_map).items()):
             if zone_id is None:
                 continue
             zone = self._get_zone_by_id(zone_id)
             zone_description = zone.find_element_by_id(zone.get_attribute('aria-describedby')).text
 
             # Iterate over all items placed in that zone and save a list of their descriptions
-            for _, definition in items_dict.items():
+            for _, definition in list(items_dict.items()):
                 item = self._get_placed_item_by_value(definition.item_id)
                 self.wait_until_visible(item)
                 item_content = item.find_element_by_css_selector('.item-content')
@@ -418,7 +418,7 @@ class MultipleValidOptionsInteractionTest(DefaultDataTestMixin, InteractionTestB
         reset = self._get_reset_button()
         self.scroll_down(pixels=100)
 
-        for item in self.items_map.values():
+        for item in list(self.items_map.values()):
             for i, zone in enumerate(item.zone_ids):
                 self.place_item(item.item_id, zone, None)
                 self.wait_until_html_in(item.feedback_positive[i], feedback_popup_content)
